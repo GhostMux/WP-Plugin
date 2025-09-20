@@ -7,6 +7,11 @@
     const out  = $('#astro-output');
     if (!form || !out) return;
 
+    // Fallbacks if localization failed
+    const cfg = (window.AstroWidgetCfg || {});
+    const endpointFromDOM = form.getAttribute('data-endpoint');
+    const nonceFromDOM    = form.getAttribute('data-nonce');
+
     form.addEventListener('submit', async function(e){
       e.preventDefault();
       out.textContent = 'Generating…';
@@ -14,14 +19,22 @@
       const fd = new FormData(form);
       const payload = Object.fromEntries(fd.entries());
 
+      // Normalize numeric fields
       if (payload.lat === '') delete payload.lat; else payload.lat = String(payload.lat);
       if (payload.lng === '') delete payload.lng; else payload.lng = String(payload.lng);
 
-      const nonce = (window.AstroWidgetCfg && AstroWidgetCfg.nonce) || payload._awnonce;
+      // Choose endpoint + nonce from localized cfg or DOM fallbacks
+      const endpoint = cfg.endpoint || endpointFromDOM;
+      const nonce    = (cfg.nonce) || nonceFromDOM || payload._awnonce;
       delete payload._awnonce;
 
+      if (!endpoint || !nonce) {
+        out.innerHTML = '<div class="error">Config missing: endpoint/nonce not found.</div>';
+        return;
+      }
+
       try {
-        const res = await fetch(AstroWidgetCfg.endpoint, {
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -35,9 +48,7 @@
         });
 
         const ct = res.headers.get('content-type') || '';
-        let data;
-        if (ct.includes('application/json')) data = await res.json();
-        else data = { raw: await res.text() };
+        const data = ct.includes('application/json') ? await res.json() : { raw: await res.text() };
 
         if (!res.ok) {
           out.innerHTML = '<div class="error">Error: ' + escapeHtml(data.error || res.statusText) + '</div>';
