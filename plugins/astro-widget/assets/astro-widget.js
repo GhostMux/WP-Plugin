@@ -14,7 +14,6 @@
       const fd = new FormData(form);
       const payload = Object.fromEntries(fd.entries());
 
-      // Normalize numeric fields
       if (payload.lat === '') delete payload.lat; else payload.lat = String(payload.lat);
       if (payload.lng === '') delete payload.lng; else payload.lng = String(payload.lng);
 
@@ -45,7 +44,6 @@
           return;
         }
 
-        // Safe render
         out.innerHTML = '<pre class="json">'+escapeHtml(JSON.stringify(data, null, 2))+'</pre>';
       } catch (err) {
         out.innerHTML = '<div class="error">Request failed: '+escapeHtml(err.message)+'</div>';
