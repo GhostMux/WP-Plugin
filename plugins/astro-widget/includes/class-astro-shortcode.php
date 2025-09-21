@@ -7,7 +7,7 @@ class Astro_Widget_Shortcode {
   }
 
   public function render($atts = [], $content = '') {
-    // Enqueue assets here so they always load when shortcode is used
+    // Ensure assets load on pages using the shortcode
     wp_enqueue_script('astro-widget-js');
     wp_enqueue_style('astro-widget-css');
 
@@ -15,13 +15,24 @@ class Astro_Widget_Shortcode {
       'type'         => 'natal',
       'house_system' => 'placidus',
       'language'     => 'en',
+      'timezone'     => 'America/New_York',
     ], $atts, 'astro_widget');
 
     $endpoint = esc_url( rest_url('astro/v1/horoscope') );
     $nonce    = esc_attr( wp_create_nonce('astrowidget_nonce') );
 
+    // Build timezone options from PHP's IANA list
+    $tz_list = timezone_identifiers_list();
+    // Group by continent for a nicer dropdown
+    $grouped = [];
+    foreach ($tz_list as $tz) {
+      $parts = explode('/', $tz, 2);
+      $group = $parts[0];
+      $label = isset($parts[1]) ? $parts[1] : $parts[0];
+      $grouped[$group][] = $tz;
+    }
+
     ob_start(); ?>
-    <!-- Astro Widget -->
     <div class="astro-widget">
       <form id="astro-form"
             novalidate
@@ -42,19 +53,36 @@ class Astro_Widget_Shortcode {
         </div>
 
         <div class="row grid">
-          <label>Birth Date (YYYY-MM-DD)
-            <input type="text" name="birth_date" placeholder="1994-08-19" required
-                   pattern="\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])" />
+          <label>Birth Date (MM-DD-YYYY)
+            <input type="text"
+                   name="birth_date"
+                   placeholder="08-19-1994"
+                   required
+                   pattern="(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])-\d{4}" />
           </label>
+
           <label>Birth Time (HH:MM 24h)
-            <input type="text" name="birth_time" placeholder="14:30" required
+            <input type="text"
+                   name="birth_time"
+                   placeholder="14:30"
+                   required
                    pattern="([01]\d|2[0-3]):([0-5]\d)" />
           </label>
         </div>
 
         <div class="row">
-          <label>Timezone (IANA, e.g., America/New_York)
-            <input type="text" name="timezone" placeholder="America/New_York" required />
+          <label>Timezone (IANA)
+            <select name="timezone" required>
+              <?php foreach ($grouped as $group => $zones): ?>
+                <optgroup label="<?php echo esc_attr($group); ?>">
+                  <?php foreach ($zones as $z): ?>
+                    <option value="<?php echo esc_attr($z); ?>" <?php selected($atts['timezone'], $z); ?>>
+                      <?php echo esc_html($z); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </optgroup>
+              <?php endforeach; ?>
+            </select>
           </label>
         </div>
 
@@ -66,20 +94,27 @@ class Astro_Widget_Shortcode {
 
         <details class="adv">
           <summary>Advanced Options (optional)</summary>
+
           <div class="row grid">
-            <label>Latitude <input type="number" step="0.000001" min="-90" max="90" name="lat" /></label>
-            <label>Longitude <input type="number" step="0.000001" min="-180" max="180" name="lng" /></label>
+            <label>Latitude
+              <input type="number" step="0.000001" min="-90" max="90" name="lat" />
+            </label>
+            <label>Longitude
+              <input type="number" step="0.000001" min="-180" max="180" name="lng" />
+            </label>
           </div>
+
           <div class="row grid">
             <label>House System
               <select name="house_system">
-                <option value="placidus" <?php selected($atts['house_system'], 'placidus'); ?>>Placidus</option>
-                <option value="koch" <?php selected($atts['house_system'], 'koch'); ?>>Koch</option>
-                <option value="whole_sign" <?php selected($atts['house_system'], 'whole_sign'); ?>>Whole Sign</option>
-                <option value="equal" <?php selected($atts['house_system'], 'equal'); ?>>Equal</option>
-                <option value="meridian" <?php selected($atts['house_system'], 'meridian'); ?>>Meridian</option>
+                <option value="placidus"     <?php selected($atts['house_system'], 'placidus'); ?>>Placidus</option>
+                <option value="koch"         <?php selected($atts['house_system'], 'koch'); ?>>Koch</option>
+                <option value="whole_sign"   <?php selected($atts['house_system'], 'whole_sign'); ?>>Whole Sign</option>
+                <option value="equal"        <?php selected($atts['house_system'], 'equal'); ?>>Equal</option>
+                <option value="meridian"     <?php selected($atts['house_system'], 'meridian'); ?>>Meridian</option>
               </select>
             </label>
+
             <label>Language
               <select name="language">
                 <option value="en" <?php selected($atts['language'], 'en'); ?>>English</option>
@@ -94,17 +129,18 @@ class Astro_Widget_Shortcode {
               </select>
             </label>
           </div>
+
           <div class="row">
             <label>Type
               <select name="type">
-                <option value="natal" <?php selected($atts['type'], 'natal'); ?>>Natal</option>
-                <option value="transit" <?php selected($atts['type'], 'transit'); ?>>Transit</option>
-                <option value="solar_return" <?php selected($atts['type'], 'solar_return'); ?>>Solar Return</option>
-                <option value="lunar_return" <?php selected($atts['type'], 'lunar_return'); ?>>Lunar Return</option>
-                <option value="synastry" <?php selected($atts['type'], 'synastry'); ?>>Synastry</option>
-                <option value="composite" <?php selected($atts['type'], 'composite'); ?>>Composite</option>
-                <option value="zodiac_compatibility" <?php selected($atts['type'], 'zodiac_compatibility'); ?>>Zodiac Compatibility</option>
-                <option value="chinese" <?php selected($atts['type'], 'chinese'); ?>>Chinese</option>
+                <option value="natal"               <?php selected($atts['type'], 'natal'); ?>>Natal</option>
+                <option value="transit"             <?php selected($atts['type'], 'transit'); ?>>Transit</option>
+                <option value="solar_return"        <?php selected($atts['type'], 'solar_return'); ?>>Solar Return</option>
+                <option value="lunar_return"        <?php selected($atts['type'], 'lunar_return'); ?>>Lunar Return</option>
+                <option value="synastry"            <?php selected($atts['type'], 'synastry'); ?>>Synastry</option>
+                <option value="composite"           <?php selected($atts['type'], 'composite'); ?>>Composite</option>
+                <option value="zodiac_compatibility"<?php selected($atts['type'], 'zodiac_compatibility'); ?>>Zodiac Compatibility</option>
+                <option value="chinese"             <?php selected($atts['type'], 'chinese'); ?>>Chinese</option>
               </select>
             </label>
           </div>
