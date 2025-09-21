@@ -7,18 +7,21 @@ class Astro_Widget_Shortcode {
   }
 
   public function render($atts = [], $content = '') {
-    // Minimal attr support (optional defaults)
+    // Enqueue assets here so they always load when shortcode is used
+    wp_enqueue_script('astro-widget-js');
+    wp_enqueue_style('astro-widget-css');
+
     $atts = shortcode_atts([
       'type'         => 'natal',
       'house_system' => 'placidus',
       'language'     => 'en',
     ], $atts, 'astro_widget');
 
-    // Pre-generate endpoint + nonce so JS can fall back if localization is missing
     $endpoint = esc_url( rest_url('astro/v1/horoscope') );
     $nonce    = esc_attr( wp_create_nonce('astrowidget_nonce') );
 
     ob_start(); ?>
+    <!-- Astro Widget -->
     <div class="astro-widget">
       <form id="astro-form"
             novalidate
@@ -40,18 +43,11 @@ class Astro_Widget_Shortcode {
 
         <div class="row grid">
           <label>Birth Date (YYYY-MM-DD)
-            <input type="text"
-                   name="birth_date"
-                   placeholder="1994-08-19"
-                   required
+            <input type="text" name="birth_date" placeholder="1994-08-19" required
                    pattern="\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])" />
           </label>
-
           <label>Birth Time (HH:MM 24h)
-            <input type="text"
-                   name="birth_time"
-                   placeholder="14:30"
-                   required
+            <input type="text" name="birth_time" placeholder="14:30" required
                    pattern="([01]\d|2[0-3]):([0-5]\d)" />
           </label>
         </div>
@@ -70,16 +66,10 @@ class Astro_Widget_Shortcode {
 
         <details class="adv">
           <summary>Advanced Options (optional)</summary>
-
           <div class="row grid">
-            <label>Latitude
-              <input type="number" step="0.000001" min="-90" max="90" name="lat" />
-            </label>
-            <label>Longitude
-              <input type="number" step="0.000001" min="-180" max="180" name="lng" />
-            </label>
+            <label>Latitude <input type="number" step="0.000001" min="-90" max="90" name="lat" /></label>
+            <label>Longitude <input type="number" step="0.000001" min="-180" max="180" name="lng" /></label>
           </div>
-
           <div class="row grid">
             <label>House System
               <select name="house_system">
@@ -90,7 +80,6 @@ class Astro_Widget_Shortcode {
                 <option value="meridian" <?php selected($atts['house_system'], 'meridian'); ?>>Meridian</option>
               </select>
             </label>
-
             <label>Language
               <select name="language">
                 <option value="en" <?php selected($atts['language'], 'en'); ?>>English</option>
@@ -105,7 +94,6 @@ class Astro_Widget_Shortcode {
               </select>
             </label>
           </div>
-
           <div class="row">
             <label>Type
               <select name="type">
@@ -122,7 +110,6 @@ class Astro_Widget_Shortcode {
           </div>
         </details>
 
-        <!-- Hidden nonce remains for compatibility -->
         <input type="hidden" name="_awnonce" value="<?php echo $nonce; ?>" />
 
         <div class="row">
