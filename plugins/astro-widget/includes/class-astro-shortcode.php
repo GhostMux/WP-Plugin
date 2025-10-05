@@ -1,25 +1,29 @@
 <?php
-if (!defined('ABSPATH')) exit;
+if (!defined('ABSPATH'))
+  exit;
 
-class Astro_Widget_Shortcode {
-  public function register() {
+class Astro_Widget_Shortcode
+{
+  public function register()
+  {
     add_shortcode('astro_widget', [$this, 'render']);
   }
 
-  public function render($atts = [], $content = '') {
+  public function render($atts = [], $content = '')
+  {
     // Ensure assets load on pages using the shortcode
     wp_enqueue_script('astro-widget-js');
     wp_enqueue_style('astro-widget-css');
 
     $atts = shortcode_atts([
-      'type'         => 'natal',
+      'type' => 'natal',
       'house_system' => 'placidus',
-      'language'     => 'en',
-      'timezone'     => 'America/New_York',
+      'language' => 'en',
+      'timezone' => 'America/New_York',
     ], $atts, 'astro_widget');
 
-    $endpoint = esc_url( rest_url('astro/v1/horoscope') );
-    $nonce    = esc_attr( wp_create_nonce('astrowidget_nonce') );
+    $endpoint = esc_url(rest_url('astro/v1/horoscope'));
+    $nonce = esc_attr(wp_create_nonce('astrowidget_nonce'));
 
     // Build timezone options from PHP's IANA list
     $tz_list = timezone_identifiers_list();
@@ -34,11 +38,8 @@ class Astro_Widget_Shortcode {
 
     ob_start(); ?>
     <div class="astro-widget">
-      <form id="astro-form"
-            novalidate
-            autocomplete="off"
-            data-endpoint="<?php echo $endpoint; ?>"
-            data-nonce="<?php echo $nonce; ?>">
+      <form id="astro-form" novalidate autocomplete="off" data-endpoint="<?php echo $endpoint; ?>"
+        data-nonce="<?php echo $nonce; ?>">
 
         <div class="row">
           <label>Full Name
@@ -53,20 +54,14 @@ class Astro_Widget_Shortcode {
         </div>
 
         <div class="row grid">
-          <label>Birth Date (MM-DD-YYYY)
-            <input type="text"
-                   name="birth_date"
-                   placeholder="08-19-1994"
-                   required
-                   pattern="(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])-\d{4}" />
+          <label>Birth Date (MM/DD/YYYY)
+            <input type="text" name="birth_date" placeholder="08/19/1994" required
+              pattern="(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}" />
           </label>
 
-          <label>Birth Time (HH:MM 24h)
-            <input type="text"
-                   name="birth_time"
-                   placeholder="14:30"
-                   required
-                   pattern="([01]\d|2[0-3]):([0-5]\d)" />
+          <label>Birth Time (hh:mm:ss AM/PM)
+            <input type="text" name="birth_time" placeholder="12:30:00 PM" required
+              pattern="(0[1-9]|1[0-2]):[0-5]\d:[0-5]\d\s?(AM|PM|am|pm)" />
           </label>
         </div>
 
@@ -107,11 +102,11 @@ class Astro_Widget_Shortcode {
           <div class="row grid">
             <label>House System
               <select name="house_system">
-                <option value="placidus"     <?php selected($atts['house_system'], 'placidus'); ?>>Placidus</option>
-                <option value="koch"         <?php selected($atts['house_system'], 'koch'); ?>>Koch</option>
-                <option value="whole_sign"   <?php selected($atts['house_system'], 'whole_sign'); ?>>Whole Sign</option>
-                <option value="equal"        <?php selected($atts['house_system'], 'equal'); ?>>Equal</option>
-                <option value="meridian"     <?php selected($atts['house_system'], 'meridian'); ?>>Meridian</option>
+                <option value="placidus" <?php selected($atts['house_system'], 'placidus'); ?>>Placidus</option>
+                <option value="koch" <?php selected($atts['house_system'], 'koch'); ?>>Koch</option>
+                <option value="whole_sign" <?php selected($atts['house_system'], 'whole_sign'); ?>>Whole Sign</option>
+                <option value="equal" <?php selected($atts['house_system'], 'equal'); ?>>Equal</option>
+                <option value="meridian" <?php selected($atts['house_system'], 'meridian'); ?>>Meridian</option>
               </select>
             </label>
 
@@ -133,14 +128,15 @@ class Astro_Widget_Shortcode {
           <div class="row">
             <label>Type
               <select name="type">
-                <option value="natal"               <?php selected($atts['type'], 'natal'); ?>>Natal</option>
-                <option value="transit"             <?php selected($atts['type'], 'transit'); ?>>Transit</option>
-                <option value="solar_return"        <?php selected($atts['type'], 'solar_return'); ?>>Solar Return</option>
-                <option value="lunar_return"        <?php selected($atts['type'], 'lunar_return'); ?>>Lunar Return</option>
-                <option value="synastry"            <?php selected($atts['type'], 'synastry'); ?>>Synastry</option>
-                <option value="composite"           <?php selected($atts['type'], 'composite'); ?>>Composite</option>
-                <option value="zodiac_compatibility"<?php selected($atts['type'], 'zodiac_compatibility'); ?>>Zodiac Compatibility</option>
-                <option value="chinese"             <?php selected($atts['type'], 'chinese'); ?>>Chinese</option>
+                <option value="natal" <?php selected($atts['type'], 'natal'); ?>>Natal</option>
+                <option value="transit" <?php selected($atts['type'], 'transit'); ?>>Transit</option>
+                <option value="solar_return" <?php selected($atts['type'], 'solar_return'); ?>>Solar Return</option>
+                <option value="lunar_return" <?php selected($atts['type'], 'lunar_return'); ?>>Lunar Return</option>
+                <option value="synastry" <?php selected($atts['type'], 'synastry'); ?>>Synastry</option>
+                <option value="composite" <?php selected($atts['type'], 'composite'); ?>>Composite</option>
+                <option value="zodiac_compatibility" <?php selected($atts['type'], 'zodiac_compatibility'); ?>>Zodiac
+                  Compatibility</option>
+                <option value="chinese" <?php selected($atts['type'], 'chinese'); ?>>Chinese</option>
               </select>
             </label>
           </div>
